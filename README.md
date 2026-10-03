@@ -382,13 +382,3 @@ Target Deployment Platform: **Hostinger VPS (Ubuntu 22.04 LTS)**
 ## 14. License
 
 This project is licensed under the **MIT License**. See the `LICENSE` file for details.
-
----
-
-## 15. Authors & Credits
-
-**Vatsalya Shree Hospital Management System**
-
-- **Lead Developer**: Rudraksh Kushwah ([@kushwahrudraksh3-png](https://github.com/kushwahrudraksh3-png))
-- **Organization**: Vatsalya Shree Hospital Engineering Team
-- **Repository**: [kushwahrudraksh3-png/hospital-management-system](https://github.com/kushwahrudraksh3-png/hospital-management-system)
