@@ -1,0 +1,233 @@
+{% extends "receptionist/base.html" %}
+{% load static %}
+
+{% block title %}IPD Registration | Vatsalya Children Hospital{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'receptionist:dashboard' %}">Home</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'receptionist:ipd_patients' %}">IPD Patients</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            IPD Registration
+        </li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h1 class="page-title">IPD Admission Registration</h1>
+        <p class="text-muted mb-0 mt-1">
+            Register patient for inpatient admission (Phase 1).
+        </p>
+    </div>
+</div>
+
+<form id="ipdRegistrationForm" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="patient_id" value="{{ patient.id }}">
+    <input type="hidden" name="visit_id" value="{{ visit.id }}">
+    
+    <!-- 1. Patient Information (Read Only) -->
+    <article class="clinic-card mb-4">
+        <div class="card-header bg-light">
+            <h2 class="form-section-title mb-0">
+                <i class="bi bi-person-vcard text-primary me-2"></i>
+                Patient Information (Read Only)
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">UHID</label>
+                    <input type="text" class="form-control bg-light" value="{{ patient.uhid }}" readonly />
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">Patient Name</label>
+                    <input type="text" class="form-control bg-light" value="{{ patient.full_name }}" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Age</label>
+                    <input type="text" class="form-control bg-light" value="{{ patient.age }}" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Gender</label>
+                    <input type="text" class="form-control bg-light" value="{{ patient.get_gender_display }}" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Mobile Number</label>
+                    <input type="text" class="form-control bg-light" value="{{ patient.mobile_number }}" readonly />
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- 2. Admission Information -->
+    <article class="clinic-card mb-4">
+        <div class="card-header bg-light">
+            <h2 class="form-section-title mb-0">
+                <i class="bi bi-door-open text-primary me-2"></i>
+                Admission Information
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" for="admissionDate">Admission Date <span class="required-mark">*</span></label>
+                    <input id="admissionDate" name="admission_date" type="date" class="form-control" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" for="admissionTime">Admission Time <span class="required-mark">*</span></label>
+                    <input id="admissionTime" name="admission_time" type="time" class="form-control" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Admitting Doctor (Auto from OPD Visit)</label>
+                    <input type="text" class="form-control bg-light" value="{% if admitting_doctor %}Dr. {{ admitting_doctor.first_name }} {{ admitting_doctor.last_name }}{% else %}Dr. Kalpesh Manager{% endif %}" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" for="depositAmount">Security Deposit Money (₹) <span class="required-mark">*</span></label>
+                    <input id="depositAmount" name="deposit_amount" type="number" step="1" min="0" class="form-control" placeholder="e.g. 3000" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" for="paymentMode">Payment Mode <span class="required-mark">*</span></label>
+                    <select id="paymentMode" name="payment_mode" class="form-select" required>
+                        <option value="" disabled selected>Select Payment Mode</option>
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold" for="wardCategory">Ward Type <span class="required-mark">*</span></label>
+                    <select id="wardCategory" name="ward_type" class="form-select" required>
+                        <option value="" disabled selected>Select Ward Type</option>
+                        <option value="General Ward 1">General Ward 1</option>
+                        <option value="General Ward 2">General Ward 2</option>
+                        <option value="Private Ward">Private Ward</option>
+                        <option value="Deluxe Ward">Deluxe Ward</option>
+                        <option value="PICU">PICU</option>
+                        <option value="NICU">NICU</option>
+                    </select>
+                </div>
+
+                <!-- Dynamic Room Selection Dropdown -->
+                <div class="col-md-4" id="roomContainer" style="display: none;">
+                    <label class="form-label fw-bold" for="roomNumber">Room Number <span class="required-mark">*</span></label>
+                    <select id="roomNumber" name="room_number" class="form-select">
+                        <option value="" disabled selected>Select Room</option>
+                    </select>
+                </div>
+
+                <!-- Dynamic Bed Selection Dropdown -->
+                <div class="col-md-4" id="bedDropdownContainer" style="display: none;">
+                    <label class="form-label fw-bold" for="bedDropdown">Bed Number <span class="required-mark">*</span></label>
+                    <select id="bedDropdown" name="bed_number" class="form-select">
+                        <option value="" disabled selected>Select Bed</option>
+                    </select>
+                </div>
+
+                <!-- Custom Bed Number Input field -->
+                <div class="col-md-4" id="bedInputContainer" style="display: none;">
+                    <label class="form-label fw-bold" for="bedNumberInput">Bed Number <span class="required-mark">*</span></label>
+                    <input id="bedNumberInput" name="bed_number" type="text" class="form-control" placeholder="Enter Bed Number" />
+                </div>
+            </div>
+        </div>
+    </article>
+
+    <!-- 3. Additional Fields -->
+    <article class="clinic-card mb-4">
+        <div class="card-header bg-light">
+            <h2 class="form-section-title mb-0">
+                <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                Additional Fields
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label fw-bold" for="provisionalDiagnosis">Diagnosis / Admission Reason</label>
+                    <textarea id="provisionalDiagnosis" name="diagnosis" class="form-control" rows="3" placeholder="Enter reason for admission or provisional diagnosis"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="card-footer bg-white d-flex justify-content-end gap-2 py-3">
+            <a class="btn btn-light border" href="{% url 'receptionist:ipd_patients' %}">
+                <i class="bi bi-x-lg me-1"></i>Cancel
+            </a>
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-receipt me-1"></i>Save & IPD Receipt
+            </button>
+        </div>
+    </article>
+</form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Set today's date and current time by default
+        const today = new Date();
+        const dateStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        const timeStr = String(today.getHours()).padStart(2, '0') + ':' + String(today.getMinutes()).padStart(2, '0');
+        
+        document.getElementById("admissionDate").value = dateStr;
+        document.getElementById("admissionTime").value = timeStr;
+
+        const wardCategory = document.getElementById('wardCategory');
+        const roomContainer = document.getElementById('roomContainer');
+        const bedDropdownContainer = document.getElementById('bedDropdownContainer');
+        const bedInputContainer = document.getElementById('bedInputContainer');
+
+        const roomNumber = document.getElementById('roomNumber');
+        const bedDropdown = document.getElementById('bedDropdown');
+        const bedNumberInput = document.getElementById('bedNumberInput');
+
+        wardCategory.addEventListener('change', function() {
+            const ward = this.value;
+
+            // Hide and disable all dynamic inputs by default
+            roomContainer.style.display = 'none';
+            bedDropdownContainer.style.display = 'none';
+            bedInputContainer.style.display = 'none';
+
+            roomNumber.removeAttribute('required');
+            roomNumber.disabled = true;
+            bedDropdown.removeAttribute('required');
+            bedDropdown.disabled = true;
+            bedNumberInput.removeAttribute('required');
+            bedNumberInput.disabled = true;
+
+            if (ward === 'Private Ward') {
+                roomContainer.style.display = 'block';
+                roomNumber.disabled = false;
+                roomNumber.setAttribute('required', 'required');
+                populateSelect(roomNumber, ['101', '102', '103', '104', '105', '201']);
+            } else if (ward === 'Deluxe Ward') {
+                roomContainer.style.display = 'block';
+                roomNumber.disabled = false;
+                roomNumber.setAttribute('required', 'required');
+                populateSelect(roomNumber, ['202', '203', '204']);
+            } else if (ward === 'PICU' || ward === 'NICU') {
+                bedDropdownContainer.style.display = 'block';
+                bedDropdown.disabled = false;
+                bedDropdown.setAttribute('required', 'required');
+                populateSelect(bedDropdown, ['1', '2', '3', '4', '5']);
+            }
+        });
+
+        function populateSelect(selectEl, options) {
+            selectEl.innerHTML = '<option value="" disabled selected>Select option</option>';
+            options.forEach(opt => {
+                const el = document.createElement('option');
+                el.value = opt;
+                el.textContent = opt;
+                selectEl.appendChild(el);
+            });
+        }
+    });
+</script>
+{% endblock %}

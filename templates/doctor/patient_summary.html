@@ -1,0 +1,370 @@
+{% extends "doctor/base_doctor.html" %}
+{% load static %}
+
+{% block title %}Patient Summary | Vatsalya Children Hospital{% endblock %}
+
+{% block extra_css %}
+<style>
+.btn-info {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--clinic-info, #0284c7);
+    --bs-btn-border-color: var(--clinic-info, #0284c7);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #0369a1;
+    --bs-btn-hover-border-color: #0369a1;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #0369a1;
+    --bs-btn-active-border-color: #0369a1;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'doctor:dashboard' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Patients</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Patient Summary</li>
+    </ol>
+</nav>
+
+<!-- Page Header with Action Buttons -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h1 class="mb-1">Patient Summary</h1>
+        <p class="text-muted mb-0">Detailed clinical logs, prescription history, vitals, and billing records.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'doctor:queue' %}" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back to Patient List</a>
+    </div>
+</div>
+
+<!-- Patient Hero Card -->
+<div class="clinic-card mb-4">
+    <div class="card-body p-4">
+        <div class="row align-items-center">
+            <!-- Photo Column -->
+            <div class="col-md-auto text-center mb-3 mb-md-0">
+                <div class="patient-hero-avatar mx-auto">{{ avatar_initials }}</div>
+            </div>
+            <!-- Information Details Column -->
+            <div class="col-md">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3 justify-content-center justify-content-md-start">
+                    <h2 class="mb-0">{{ patient.full_name }}</h2>
+                    {% if visit.status == 'Completed' %}
+                    <span class="badge badge-soft-success">Completed</span>
+                    {% elif visit.status == 'Pending Lab' %}
+                    <span class="badge badge-soft-warning">Pending</span>
+                    {% else %}
+                    <span class="badge badge-soft-warning">Waiting</span>
+                    {% endif %}
+                </div>
+                <div class="row g-3 fs-sm-custom text-muted text-center text-md-start">
+                    <div class="col-sm-6 col-md-3">
+                        <strong>Patient ID:</strong> <span class="text-dark fw-medium">{{ patient.uhid }}</span>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <strong>Age / Gender:</strong> <span class="text-dark fw-medium">{{ patient.age }} / {{ patient.get_gender_display }}</span>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <strong>DOB:</strong> <span class="text-dark fw-medium">{{ patient.date_of_birth|date:"d/m/Y" }}</span>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <strong>Father's Name:</strong> <span class="text-dark fw-medium">{{ patient.father_name|default:"-" }}</span>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <strong>Mobile:</strong> <span class="text-dark fw-medium">{{ patient.mobile_number }}</span>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <strong>Address:</strong> <span class="text-dark fw-medium">{{ patient.address }}</span>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <strong>Registration Date:</strong> <span class="text-dark fw-medium">{{ patient.created_at|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Health Summary Cards -->
+<div class="d-flex flex-wrap gap-3 mb-4">
+    <!-- Weight -->
+    <div class="flex-fill" style="min-width: 130px; max-width: 250px;">
+        <div class="metric-card h-100">
+            <div class="metric-header">
+                <div class="metric-icon icon-blue"><i class="bi bi-clipboard-data"></i></div>
+                <span class="badge badge-soft-primary">Vitals</span>
+            </div>
+            <div>
+                <div class="metric-label">Weight</div>
+                <div class="metric-value fs-3 mt-1">{{ vitals.weight|default:"-" }} <span class="fs-6 fw-normal text-muted">kg</span></div>
+            </div>
+        </div>
+    </div>
+    <!-- Blood Pressure -->
+    <div class="flex-fill" style="min-width: 130px; max-width: 250px;">
+        <div class="metric-card h-100">
+            <div class="metric-header">
+                <div class="metric-icon icon-red"><i class="bi bi-heart-pulse"></i></div>
+                <span class="badge badge-soft-danger">Vitals</span>
+            </div>
+            <div>
+                <div class="metric-label">BP</div>
+                <div class="metric-value fs-3 mt-1">{{ vitals.blood_pressure|default:"-" }} <span class="fs-6 fw-normal text-muted">mmHg</span></div>
+            </div>
+        </div>
+    </div>
+    <!-- Temperature -->
+    <div class="flex-fill" style="min-width: 130px; max-width: 250px;">
+        <div class="metric-card h-100">
+            <div class="metric-header">
+                <div class="metric-icon icon-orange"><i class="bi bi-thermometer-half"></i></div>
+                <span class="badge badge-soft-warning">Vitals</span>
+            </div>
+            <div>
+                <div class="metric-label">Temp</div>
+                <div class="metric-value fs-3 mt-1 text-danger">{{ vitals.temperature|default:"-" }} <span class="fs-6 fw-normal text-muted">°F</span></div>
+            </div>
+        </div>
+    </div>
+    <!-- SpO2 -->
+    <div class="flex-fill" style="min-width: 130px; max-width: 250px;">
+        <div class="metric-card h-100">
+            <div class="metric-header">
+                <div class="metric-icon icon-green"><i class="bi bi-activity"></i></div>
+                <span class="badge badge-soft-success">Vitals</span>
+            </div>
+            <div>
+                <div class="metric-label">SpO₂</div>
+                <div class="metric-value fs-3 mt-1">{{ vitals.spo2|default:"-" }} <span class="fs-6 fw-normal text-muted">%</span></div>
+            </div>
+        </div>
+    </div>
+    <!-- Heart Rate -->
+    <div class="flex-fill" style="min-width: 130px; max-width: 250px;">
+        <div class="metric-card h-100">
+            <div class="metric-header">
+                <div class="metric-icon icon-blue"><i class="bi bi-heart"></i></div>
+                <span class="badge badge-soft-primary">Vitals</span>
+            </div>
+            <div>
+                <div class="metric-label">Heart Rate</div>
+                <div class="metric-value fs-3 mt-1">{{ vitals.heart_rate|default:"-" }} <span class="fs-6 fw-normal text-muted">bpm</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blood Group -->
+    <div class="flex-fill" style="min-width: 130px; max-width: 250px;">
+        <div class="metric-card h-100">
+            <div class="metric-header">
+                <div class="metric-icon icon-red"><i class="bi bi-droplet-fill"></i></div>
+                <span class="badge badge-soft-danger">Vitals</span>
+            </div>
+            <div>
+                <div class="metric-label">Blood Group</div>
+                <div class="metric-value fs-3 mt-1">{{ vitals.blood_group|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chief Complaint Section -->
+<div class="clinic-card">
+    <div class="card-header">
+        <div>
+            <h5 class="mb-1 fw-bold text-dark">Chief Complaint</h5>
+            <p class="text-muted mb-0 fs-xs">Primary complaint recorded during OPD registration.</p>
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="fs-5 fw-semibold text-dark mb-0">{{ vitals.chief_complaint|default:"No complaint details recorded." }}</p>
+    </div>
+</div>
+
+
+
+<!-- Handwriting Prescription Pad Section -->
+<div class="clinic-card mt-4">
+    <div class="card-header bg-light py-3 border-bottom">
+        <h5 class="mb-1 fw-bold text-dark">Handwriting Prescription Pad</h5>
+        <p class="text-muted mb-0 fs-xs">Write the final prescription using a stylus or touch-enabled device.</p>
+    </div>
+    <div class="card-body">
+        <!-- Toolbar -->
+        <div class="d-flex justify-content-start gap-2 mb-3 flex-wrap">
+            <button type="button" class="btn btn-outline-primary btn-sm active" id="canvasPenBtn" title="Pen">
+                <i class="bi bi-pencil"></i> Pen
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="canvasEraserBtn" title="Eraser">
+                <i class="bi bi-eraser"></i> Eraser
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="canvasUndoBtn" title="Undo">
+                <i class="bi bi-arrow-counterclockwise"></i> Undo
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="canvasRedoBtn" title="Redo">
+                <i class="bi bi-arrow-clockwise"></i> Redo
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm ms-auto" id="canvasClearBtn" title="Clear Canvas">
+                <i class="bi bi-trash"></i> Clear Canvas
+            </button>
+        </div>
+
+        <!-- Drawing Canvas Wrapper (A4 portrait) -->
+        <div class="prescription-canvas-wrapper mb-3">
+            <!-- Finalized Prescription Pad Template Background -->
+            <div class="prescription-pad">
+                <!-- Header -->
+                <div class="prescription-header">
+                    <img src="{% static 'images/vatsalya_logo.png' %}" alt="Vatsalya Hospital logo" class="header-logo-left">
+                    <div class="header-title-container">
+                        <h1>वात्सल्य श्री हॉस्पिटल</h1>
+                    </div>
+                    <img src="{% static 'images/caduceus.png' %}" alt="Medical caduceus" class="header-logo-right">
+                </div>
+
+                <!-- Registration Bar -->
+                <div class="reg-bar">
+                    Reg. No : NH/7245/MAY-2026
+                </div>
+
+                <!-- Doctor Details -->
+                <div class="doctor-info-section">
+                    <div class="doc-details-left">
+                        <div class="doc-name">डॉ. कल्पेश मैनेजर (पाटीदार)</div>
+                        <div class="doc-degrees">M.B.B.S., M.D. (Pediatrics)</div>
+                        <div>Reg. No. : MP-17921</div>
+                        <div class="fw-semibold">Pediatrician</div>
+                        <div>Mob. : 9630037055</div>
+                    </div>
+                    <div class="doc-details-center">
+                        <img src="{% static 'images/sleeping_baby.png' %}" alt="Baby cradle illustration">
+                    </div>
+                    <div class="doc-details-right">
+                        <div class="prev-docs-title">पूर्व चिकित्सक :</div>
+                        <ul class="prev-docs-list">
+                            <li>इंदिरा गाँधी मेडिकल कॉलेज, नागपुर</li>
+                            <li>गजरा राजा मेडिकल कॉलेज, ग्वालियर</li>
+                            <li>गांधी मेडिकल कॉलेज, भोपाल</li>
+                            <li>रेनबो चिल्ड्रेन हॉस्पिटल, भोपाल</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Patient Demographics Section -->
+                <div class="patient-demographics-section">
+                    <div class="demographics-row-1">
+                        <div class="field-group">
+                            <span class="field-label">Name :</span>
+                            <span class="field-value-dotted">{{ patient.full_name }}</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">Age / Sex :</span>
+                            <span class="field-value-dotted">{{ patient.age|cut:" 0 Months" }} / {{ patient.get_gender_display }}</span>
+                        </div>
+                    </div>
+                    <div class="demographics-row-2">
+                        <div class="field-group">
+                            <span class="field-label">Weight :</span>
+                            <span class="field-value-dotted">{{ vitals.weight|default:"-" }} kg</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">Height :</span>
+                            <span class="field-value-dotted">{{ vitals.height|default:"-" }} cm</span>
+                        </div>
+                        <div class="field-group">
+                            <span class="field-label">Address :</span>
+                            <span class="field-value-dotted">{{ patient.address|default:"-" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complaint + Bottle Feed full-width row -->
+                <div class="complaint-bottle-row">
+                    <div class="complaint-col-left">
+                        <span class="exam-item-heading">Complaints :</span>
+                        <span class="prescription-text-entry">{{ vitals.chief_complaint|default:"-" }}</span>
+                    </div>
+                    <div class="complaint-col-right">
+                        <span class="exam-item-heading">Bottle Feed :</span>
+                        <span class="prescription-text-entry" id="bottle-feed-value">{{ vitals.bottle_feed|default:"-" }}</span>
+                    </div>
+                </div>
+
+                <!-- Prescription Body Grid Layout -->
+                <div class="prescription-body-grid">
+                    <!-- Left Examinations Panel -->
+                    <div class="body-left-panel">
+                        <div class="exam-fields-list">
+                            <div><div class="exam-item-heading">Examinations :</div><div class="writing-space"></div></div>
+                            <div><div class="exam-item-heading">R/S :</div><div class="writing-space"></div></div>
+                            <div><div class="exam-item-heading">CVS :</div><div class="writing-space"></div></div>
+                            <div><div class="exam-item-heading">P/A :</div><div class="writing-space"></div></div>
+                            <div><div class="exam-item-heading">CNS :</div><div class="writing-space"></div></div>
+                            <div><div class="exam-item-heading">Investigations :</div><div class="writing-space"></div></div>
+                        </div>
+                        <!-- Vitals -->
+                        <div class="vitals-card-box">
+                            <div class="vitals-box-title">Vitals Log</div>
+                            <div class="vital-line-item"><span class="vital-line-label">HR :</span><span class="vital-line-value-underlined">{{ vitals.heart_rate|default:"-" }} bpm</span></div>
+                            <div class="vital-line-item"><span class="vital-line-label">RR :</span><span class="vital-line-value-underlined">{% if vitals.respiratory_rate %}{{ vitals.respiratory_rate }} breaths/min{% else %}-{% endif %}</span></div>
+                            <div class="vital-line-item"><span class="vital-line-label">SpO2 :</span><span class="vital-line-value-underlined">{{ vitals.spo2|default:"-" }}%</span></div>
+                            <div class="vital-line-item"><span class="vital-line-label">Temp :</span><span class="vital-line-value-underlined">{{ vitals.temperature|default:"-" }} °F</span></div>
+                            <div class="vital-line-item"><span class="vital-line-label">B.P. :</span><span class="vital-line-value-underlined">{{ vitals.blood_pressure|default:"-" }}</span></div>
+                        </div>
+                    </div>
+                    <!-- Right Rx Panel -->
+                    <div class="body-right-panel">
+                        <div class="signature-container">
+                            <div class="signature-line">Dr. Kalpesh Manager (Patidar)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="prescription-footer">
+                    <div class="footer-slogan-row"><div class="footer-slogan">Towards Better Child Health</div></div>
+                    <div class="footer-timing-bar">परामर्श समय : सुबह 10 से दोपहर 2 बजे तक एवं सायंकाल 5 से रात्रि 8 बजे तक (सोमवार अवकाश)</div>
+                    <div class="footer-address-bar">
+                        <div class="swachh-logo-container"><img src="{% static 'images/swachh_bharat.png' %}" alt="Swachh Bharat spectacles"><span>एक कदम स्वस्थता की ओर</span></div>
+                        <div>ओल्ड ए.बी. रोड, गुलझारा (धामनोद), तहसील धरमपुरी, जिला धार (म.प्र.) – 454552, मो: 9630037055</div>
+                    </div>
+                </div>
+            </div>
+            <canvas id="handwritingCanvas"></canvas>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row g-3 mt-4">
+            <div class="col-md-3">
+                <a href="{% url 'doctor:prescription_preview' %}?visit_id={{ visit.id }}&patient_id={{ patient.id }}" class="btn btn-outline-primary w-100 justify-content-center py-2">
+                    <i class="bi bi-eye"></i> View Prescription
+                </a>
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-primary w-100 justify-content-center py-2" id="saveHandwrittenPrescriptionBtn"
+                        data-visit-id="{{ visit.id }}"
+                        data-patient-id="{{ patient.id }}">
+                    <i class="bi bi-save"></i> Save Prescription
+                </button>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'doctor:report_list' %}?visit_id={{ visit.id }}&patient_id={{ patient.id }}" class="btn btn-success w-100 justify-content-center py-2" id="proceedToLabBtn" data-visit-id="{{ visit.id }}" data-patient-id="{{ patient.id }}">
+                    <i class="bi bi-arrow-right-circle"></i> Proceed to Lab
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'doctor:recommend_ipd' %}?patient_id={{ patient.id }}&visit_id={{ visit.id }}" class="btn btn-info w-100 justify-content-center py-2" id="proceedToIpdBtn" data-visit-id="{{ visit.id }}" data-patient-id="{{ patient.id }}">
+                    <i class="bi bi-hospital"></i> Proceed to IPD
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script id="saved-strokes-data" type="application/json">
+    {{ saved_strokes_json|safe }}
+</script>
+{% endblock %}

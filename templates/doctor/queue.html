@@ -1,0 +1,92 @@
+{% extends "doctor/base_doctor.html" %}
+
+{% block title %}Today's Patients | Vatsalya Children Hospital{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">Today's Patients</h1>
+        <p class="text-muted mb-0">Monitor and call patients in order of registration.</p>
+    </div>
+</div>
+
+<div class="clinic-card">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter-tab="all">All Patients</button>
+            <button class="filter-tab" data-filter-tab="waiting">Waiting</button>
+            <button class="filter-tab" data-filter-tab="lab-request">Lab Request</button>
+            <button class="filter-tab" data-filter-tab="followup">Follow-up</button>
+        </div>
+        <div class="search-field">
+            <i class="bi bi-search"></i>
+            <input class="form-control form-control-sm" data-queue-search placeholder="Search by name or ID...">
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table clinic-table queue-table align-middle mb-0" data-queue-table data-today-date="{{ today|date:'Y-m-d' }}">
+                <thead>
+                    <tr>
+                        <th>Queue No</th>
+                        <th>Patient ID</th>
+                        <th>Name</th>
+                        <th>Age/Sex</th>
+                        <th>Token Time</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for visit in today_visits %}
+                    <tr data-status="{% if visit.status == 'Pending Lab' %}lab-request{% elif visit.status == 'Completed' or visit.status == 'IPD Recommended' %}completed{% else %}waiting{% endif %}" data-visit-type="{{ visit.visit_type }}" data-visit-date="{{ visit.visit_date|date:'Y-m-d' }}">
+                        <td class="fw-bold">#{{ visit.token_number|default:forloop.counter }}</td>
+                        <td class="patient-id">{{ visit.patient.uhid }}</td>
+                        <td class="patient-name fw-semibold">{{ visit.patient.full_name }}</td>
+                        <td>{{ visit.patient.age }} / {{ visit.patient.get_gender_display }}</td>
+                        <td>{{ visit.visit_time|time:"h:i A" }}</td>
+                        <td>
+                            {% if visit.status == 'Pending Lab' %}
+                            <span class="badge badge-soft-warning badge-normal-lab">Pending</span>
+                            <span class="badge badge-soft-warning badge-requested-lab" style="display: none;">Pending</span>
+                            {% elif visit.status == 'Completed' %}
+                            <span class="badge badge-soft-success">Completed</span>
+                            {% elif visit.status == 'IPD Recommended' %}
+                            <span class="badge badge-soft-warning">🟠 IPD Recommended</span>
+                            {% else %}
+                            <span class="badge badge-soft-warning">Waiting</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if visit.status == 'Completed' or visit.status == 'IPD Recommended' %}
+                            <a href="{% url 'doctor:prescription_preview' %}?visit_id={{ visit.id }}&patient_id={{ visit.patient.id }}" class="btn btn-light btn-sm">View Rx</a>
+                            {% elif visit.status == 'Pending Lab' %}
+                                {% if visit.handwritten_prescription %}
+                                <a href="{% url 'doctor:prescription_preview' %}?visit_id={{ visit.id }}&patient_id={{ visit.patient.id }}" class="btn btn-light btn-sm btn-view-rx-lab" style="display: none;">View Rx</a>
+                                <a href="{% url 'doctor:prescription_preview' %}?visit_id={{ visit.id }}&patient_id={{ visit.patient.id }}" class="btn btn-light btn-sm btn-examine-lab">View Rx</a>
+                                {% else %}
+                                <a href="{% url 'doctor:prescription_preview' %}?visit_id={{ visit.id }}&patient_id={{ visit.patient.id }}" class="btn btn-light btn-sm btn-view-rx-lab" style="display: none;">View Rx</a>
+                                <a href="{% url 'doctor:patient_summary' %}?visit_id={{ visit.id }}&patient_id={{ visit.patient.id }}" class="btn {% if forloop.first %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm btn-examine-lab">Examine</a>
+                                {% endif %}
+                            {% else %}
+                                {% if visit.handwritten_prescription %}
+                                <a href="{% url 'doctor:prescription_preview' %}?visit_id={{ visit.id }}&patient_id={{ visit.patient.id }}" class="btn btn-light btn-sm">View Rx</a>
+                                {% else %}
+                                <a href="{% url 'doctor:patient_summary' %}?visit_id={{ visit.id }}&patient_id={{ visit.patient.id }}" class="btn {% if forloop.first %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm">Examine</a>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            No appointments found for today.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

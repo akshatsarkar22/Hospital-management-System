@@ -1,0 +1,347 @@
+{% extends "receptionist/base.html" %}
+
+{% block title %}{% if is_edit %}Edit Latest Vitals{% else %}Vitals Entry{% endif %} | Vatsalya Shree Hospital{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'receptionist:dashboard' %}">Home</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'receptionist:patient_list' %}">Patient List</a>
+        </li>
+        <li
+            class="breadcrumb-item active"
+            aria-current="page"
+        >
+            {% if is_edit %}Edit Latest Vitals{% else %}Record Vitals{% endif %}
+        </li>
+    </ol>
+</nav>
+<div
+    class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4"
+>
+    <div>
+        <h1 class="page-title">{% if is_edit %}Edit Latest Vitals{% else %}Record Vitals{% endif %}</h1>
+        <p class="text-muted mb-0 mt-1">
+            {% if is_edit %}
+                Update the patient’s latest vital signs.
+            {% else %}
+                Capture the patient’s vital signs before doctor examination.
+            {% endif %}
+        </p>
+    </div>
+    <span class="badge badge-soft-primary py-2 px-3">
+        <i class="bi bi-clipboard2-pulse me-1"></i>
+        {% if latest_visit %}{{ latest_visit.opd_number }}{% else %}No active OPD{% endif %}
+    </span>
+</div>
+<article
+    class="clinic-card patient-hero mb-4"
+    aria-label="Patient Summary"
+>
+    <div class="patient-hero-top">
+        <div class="patient-photo">
+            <i class="bi bi-person-fill"></i>
+        </div>
+        <div class="flex-grow-1">
+            <span class="patient-info-label">
+                Patient Summary
+            </span>
+            <h2 class="patient-hero-name">
+                {{ patient.full_name }}
+                {% if latest_visit and latest_visit.visit_type == "New Visit" %}
+                    <span class="badge badge-soft-primary ms-1 align-middle">New</span>
+                {% else %}
+                    <span class="badge badge-soft-success ms-1 align-middle">Active</span>
+                {% endif %}
+            </h2>
+            <div class="patient-hero-meta">
+                <span>Patient ID: {{ patient.uhid }}</span>
+                <span>{{ patient.age }}</span>
+                <span>{{ patient.gender }}</span>
+            </div>
+        </div>
+        <div class="text-end d-none d-md-block">
+            <span class="data-label">Visit Date</span>
+            <span class="data-value">{% if latest_visit %}{{ latest_visit.visit_date|date:"d M Y" }}{% else %}No visits{% endif %}</span>
+        </div>
+    </div>
+    <div class="patient-info-grid">
+        <div class="patient-info-item">
+            <span class="patient-info-label">Mobile Number</span>
+            <span class="patient-info-value">+91 {{ patient.mobile_number }}</span>
+        </div>
+        <div class="patient-info-item">
+            <span class="patient-info-label">Address</span>
+            <span class="patient-info-value">{{ patient.address }}</span>
+        </div>
+        <div class="patient-info-item">
+            <span class="patient-info-label">OPD Number</span>
+            <span class="patient-info-value">{% if latest_visit %}{{ latest_visit.opd_number }}{% else %}No active OPD{% endif %}</span>
+        </div>
+    </div>
+</article>
+<div class="row g-4">
+    <section class="col-xl-12">
+        <form class="clinic-card" method="post" action="">
+            {% csrf_token %}
+            <div
+                class="card-header d-flex justify-content-between align-items-center"
+            >
+                <h2 class="form-section-title">
+                    <i class="bi bi-heart-pulse"></i>
+                    Vital Signs
+                </h2>
+                <span class="text-muted fw-normal small">
+                    All fields marked
+                    <span class="required-mark">*</span>
+                    are required
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <label
+                            class="form-label"
+                            for="chiefComplaint"
+                        >
+                            Chief Complaint
+                            <span class="required-mark">
+                                *
+                            </span>
+                        </label>
+                        <textarea
+                            id="chiefComplaint"
+                            name="chief_complaint"
+                            class="form-control"
+                            rows="3"
+                            placeholder="Enter patient's main complaint"
+                            required
+                        >{% if vitals %}{{ vitals.chief_complaint }}{% endif %}</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="bloodGroup">
+                            Blood Group
+                            <span class="required-mark">*</span>
+                        </label>
+                        <select id="bloodGroup" name="blood_group" class="form-select" required>
+                            <option value="Unknown" {% if patient.blood_group == "Unknown" %}selected{% endif %}>Unknown</option>
+                            <option value="A+" {% if patient.blood_group == "A+" %}selected{% endif %}>A+</option>
+                            <option value="A-" {% if patient.blood_group == "A-" %}selected{% endif %}>A-</option>
+                            <option value="B+" {% if patient.blood_group == "B+" %}selected{% endif %}>B+</option>
+                            <option value="B-" {% if patient.blood_group == "B-" %}selected{% endif %}>B-</option>
+                            <option value="AB+" {% if patient.blood_group == "AB+" %}selected{% endif %}>AB+</option>
+                            <option value="AB-" {% if patient.blood_group == "AB-" %}selected{% endif %}>AB-</option>
+                            <option value="O+" {% if patient.blood_group == "O+" %}selected{% endif %}>O+</option>
+                            <option value="O-" {% if patient.blood_group == "O-" %}selected{% endif %}>O-</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label
+                            class="form-label"
+                            for="weight"
+                        >
+                            Weight
+                            <span class="required-mark">
+                                *
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <input
+                                id="weight"
+                                name="weight"
+                                class="form-control"
+                                type="number"
+                                step="0.1"
+                                value="{% if vitals %}{{ vitals.weight }}{% endif %}"
+                                required
+                                autofocus
+                            />
+                            <span class="input-group-text">
+                                kg
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label
+                            class="form-label"
+                            for="temperature"
+                        >
+                            Temperature
+                            <span class="required-mark">
+                                *
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <input
+                                id="temperature"
+                                name="temperature"
+                                class="form-control"
+                                type="number"
+                                step="0.1"
+                                value="{% if vitals %}{{ vitals.temperature }}{% endif %}"
+                                required
+                            />
+                            <span class="input-group-text">
+                                °F
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label
+                            class="form-label"
+                            for="heartRate"
+                        >
+                            Heart Rate
+                            <span class="required-mark">
+                                *
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <input
+                                id="heartRate"
+                                name="heart_rate"
+                                class="form-control"
+                                type="number"
+                                value="{% if vitals %}{{ vitals.heart_rate }}{% endif %}"
+                                required
+                            />
+                            <span class="input-group-text">
+                                bpm
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label
+                            class="form-label"
+                            for="height"
+                        >
+                            Height (cm)
+                        </label>
+                        <div class="input-group">
+                            <input
+                                id="height"
+                                name="height"
+                                class="form-control"
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                value="{% if vitals and vitals.height %}{{ vitals.height }}{% endif %}"
+                                placeholder="e.g. 98.5"
+                            />
+                            <span class="input-group-text">
+                                cm
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label
+                            class="form-label"
+                            for="bloodPressure"
+                        >
+                            Blood Pressure
+                            <span class="required-mark">
+                                *
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <input
+                                id="bloodPressure"
+                                name="blood_pressure"
+                                class="form-control"
+                                value="{% if vitals %}{{ vitals.blood_pressure }}{% endif %}"
+                                placeholder="e.g. 96/62"
+                                required
+                            />
+                            <span class="input-group-text">
+                                mmHg
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label
+                            class="form-label"
+                            for="spo2"
+                        >
+                            SpO₂
+                            <span class="required-mark">
+                                *
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <input
+                                id="spo2"
+                                name="spo2"
+                                class="form-control"
+                                type="number"
+                                value="{% if vitals %}{{ vitals.spo2 }}{% endif %}"
+                                required
+                            />
+                            <span class="input-group-text">
+                                %
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="respiratoryRate">
+                            RR (Respiratory Rate)
+                        </label>
+                        <div class="input-group">
+                            <input
+                                id="respiratoryRate"
+                                name="respiratory_rate"
+                                class="form-control"
+                                type="number"
+                                min="0"
+                                value="{% if vitals and vitals.respiratory_rate %}{{ vitals.respiratory_rate }}{% endif %}"
+                                placeholder="e.g. 22"
+                            />
+                            <span class="input-group-text">breaths/min</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="bottleFeed">
+                            Bottle Feed
+                        </label>
+                        <select id="bottleFeed" name="bottle_feed" class="form-select">
+                            <option value="">Select Bottle Feed</option>
+                            <option value="Yes" {% if vitals and vitals.bottle_feed == "Yes" %}selected{% endif %}>Yes</option>
+                            <option value="No" {% if vitals and vitals.bottle_feed == "No" %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a
+                    class="btn btn-light"
+                    href="{% url 'receptionist:patient_summary_detail' patient.id %}"
+                >
+                    <i class="bi bi-x-lg"></i>
+                    Cancel
+                </a>
+                <button
+                    class="btn btn-outline-primary"
+                    type="reset"
+                >
+                    <i
+                        class="bi bi-arrow-counterclockwise"
+                    ></i>
+                    Reset
+                </button>
+                <button
+                    class="btn btn-primary"
+                    type="submit"
+                >
+                    <i class="bi bi-check2-circle"></i>
+                    {% if is_edit %}Update Vitals{% else %}Save Vitals{% endif %}
+                </button>
+
+
+                <!-- <button class="btn btn-success" type="button"><i class="bi bi-arrow-right-circle"></i>Continue to Doctor Examination</button> -->
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

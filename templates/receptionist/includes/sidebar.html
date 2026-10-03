@@ -1,0 +1,73 @@
+{% load static %}
+<aside class="sidebar d-flex flex-column" aria-label="Main navigation">
+    <a class="brand d-flex align-items-center gap-2" href="{% url 'receptionist:dashboard' %}">
+        <span class="brand-mark">
+            <img src="{% static 'images/vatsalya_child_logo.png' %}" alt="Vatsalya Shree Hospital Logo" style="height: 32px; width: auto; object-fit: contain;">
+        </span>
+        <span>Vatsalya Shree Hospital</span>
+    </a>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Main Menu</div>
+        <a class="nav-link{% if active_nav == 'dashboard' %} active{% endif %}" href="{% url 'receptionist:dashboard' %}">
+            <i class="bi bi-grid-1x2"></i>
+            Dashboard
+        </a>
+        <a class="nav-link{% if active_nav == 'patient_registration' or active_nav == 'opd_registration' %} active{% endif %}" href="{% url 'receptionist:patient_registration' %}">
+            <i class="bi bi-person-plus"></i>
+            Patient / OPD Registration
+        </a>
+        {% if request.user.role == 'RECEPTIONIST' or request.user.is_superuser %}
+        <a class="nav-link{% if active_nav == 'ipd_dashboard' %} active{% endif %}" href="{% url 'receptionist:ipd_dashboard' %}">
+            <i class="bi bi-speedometer2"></i>
+            Hospital IPD Dashboard
+        </a>
+        <a class="nav-link{% if active_nav == 'ipd_patients' %} active{% endif %}" href="{% url 'receptionist:ipd_patients' %}">
+            <i class="bi bi-hospital"></i>
+            IPD Patients
+        </a>
+        <a class="nav-link{% if active_nav == 'admitted_patients' %} active{% endif %}" href="{% url 'receptionist:admitted_patients' %}">
+            <i class="bi bi-people-fill"></i>
+            Currently Admitted Patients
+        </a>
+        <a class="nav-link{% if active_nav == 'ready_for_billing' %} active{% endif %}" href="{% url 'receptionist:ready_for_billing' %}">
+            <i class="bi bi-hourglass-split"></i>
+            Ready for Billing
+        </a>
+        <a class="nav-link{% if active_nav == 'discharged_patients' %} active{% endif %}" href="{% url 'receptionist:discharged_patients' %}">
+            <i class="bi bi-archive-fill"></i>
+            Discharged Patients
+        </a>
+
+        {% endif %}
+        <a class="nav-link{% if active_nav == 'patient_list' or active_nav == 'patient_summary' or active_nav == 'patient_profile' or active_nav == 'edit_profile' %} active{% endif %}" href="{% url 'receptionist:patient_list' %}">
+            <i class="bi bi-people"></i>
+            Patient List
+        </a>
+        {% if request.user.role == 'RECEPTIONIST' or request.user.is_superuser %}
+        <a class="nav-link{% if active_nav == 'received_lab_reports' %} active{% endif %}" href="{% url 'receptionist:received_lab_reports' %}">
+            <i class="bi bi-file-earmark-medical"></i>
+            Received Lab Reports
+        </a>
+        {% endif %}
+        <a class="nav-link" href="{% url 'accounts:login' %}">
+            <i class="bi bi-box-arrow-right"></i>
+            Logout
+        </a>
+    </nav>
+    <div class="user-summary d-flex align-items-center gap-2 p-3 m-3 rounded mt-auto">
+        <div class="user-avatar">
+            {% if request.user.first_name and request.user.last_name %}
+                {{ request.user.first_name|make_list|first }}{{ request.user.last_name|make_list|first }}
+            {% else %}
+                RC
+            {% endif %}
+        </div>
+        <div class="d-flex flex-column min-width-0">
+            <span class="user-name fw-semibold text-truncate small">
+                {{ request.user.first_name }} {{ request.user.last_name }}
+            </span>
+            <span class="user-role text-muted small" style="font-size: 0.75rem;">Receptionist</span>
+        </div>
+    </div>
+</aside>
